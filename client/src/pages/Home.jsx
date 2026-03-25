@@ -67,16 +67,19 @@ const Home = () => {
             icon={<Crown className="text-[#2DD4BF]" size={26} />}
             title="Subscribe & Play"
             description="Join for a chance to win big prizes every draw"
+            onClick={() => navigate("/subscription")}
           />
           <FeatureCard 
             icon={<Dice5 className="text-[#2DD4BF]" size={26} />}
             title="Lucky Draws"
             description="5 random numbers drawn — match 3+ to win"
+            onClick={() => navigate("/draw")}
           />
           <FeatureCard 
             icon={<Heart className="text-[#2DD4BF]" size={26} />}
             title="Give Back"
             description="Choose a charity and donate a % of your winnings"
+            onClick={() => navigate("/charity")}
           />
         </div>
       </main>
@@ -84,8 +87,8 @@ const Home = () => {
   );
 };
 
-const FeatureCard = ({ icon, title, description }) => (
-  <div className="bg-[#0b1224]/60 backdrop-blur-md border border-slate-800/40 p-10 rounded-[28px] flex flex-col items-center text-center hover:bg-[#0f172a] hover:border-slate-700 transition-all cursor-default group">
+const FeatureCard = ({ icon, title, description, onClick }) => (
+  <div onClick={onClick}  className="bg-[#0b1224]/60 backdrop-blur-md border border-slate-800/40 p-10 rounded-[28px] flex flex-col items-center text-center hover:bg-[#0f172a] hover:border-slate-700 transition-all cursor-default group">
     <div className="mb-6 transform group-hover:scale-110 transition-transform duration-300">
       {icon}
     </div>

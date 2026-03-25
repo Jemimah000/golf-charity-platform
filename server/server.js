@@ -5,24 +5,25 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import connectDB from "./config/db.js";
+
 import authRoutes from "./routes/authRoutes.js";
 import drawRoutes from "./routes/drawRoutes.js";
-import scoreRoutes from "./routes/scoreRoutes.js"; 
+import scoreRoutes from "./routes/scoreRoutes.js";
+import charityRoutes from "./routes/charityRoutes.js";
 
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 
-// ✅ SOCKET SETUP
+// Socket
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // your frontend
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
   },
 });
 
-// Store io globally
 export { io };
 
 // DB
@@ -36,8 +37,9 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/draw", drawRoutes);
 app.use("/api/scores", scoreRoutes);
+app.use("/api/charity", charityRoutes);
 
-// Socket connection
+// Socket
 io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.id);
 

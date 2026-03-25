@@ -13,9 +13,7 @@ const Dashboard = () => {
   const fetchScores = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/scores", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       setScores(res.data);
@@ -24,33 +22,20 @@ const Dashboard = () => {
     }
   };
 
-  // ================= STEP 3: CHECK RESULT =================
+  // ================= CHECK RESULT =================
   const checkResult = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/draw/result");
+  const res = await axios.get("http://localhost:5000/api/draw/result");
 
-      const winnerId = res.data.winnerId;
+  const winnerId = res.data.winnerId;
 
-      // ❌ No draw yet
-      if (!winnerId) {
-        setIsWinner(null);
-        return;
-      }
+  const payload = JSON.parse(atob(token.split(".")[1]));
 
-      // 🔐 Decode JWT
-      const payload = JSON.parse(atob(token.split(".")[1]));
-
-      // ✅ Compare IDs
-      if (payload.id === winnerId) {
-        setIsWinner(true);
-      } else {
-        setIsWinner(false);
-      }
-
-    } catch (err) {
-      console.log("Check Result Error:", err.response?.data || err.message);
-    }
-  };
+  if (payload.id === winnerId) {
+    setIsWinner(true);
+  } else {
+    setIsWinner(false);
+  }
+};
 
   useEffect(() => {
     fetchScores();
@@ -60,24 +45,18 @@ const Dashboard = () => {
   // ================= ADD SCORE =================
   const handleAddScore = async () => {
     try {
-      if (!newScore) {
-        alert("Enter a score");
-        return;
-      }
+      if (!newScore) return alert("Enter a score");
 
       await axios.post(
         "http://localhost:5000/api/scores/add",
         { score: Number(newScore) },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       setNewScore("");
       fetchScores();
-
     } catch (err) {
       alert("Error adding score ❌");
     }
@@ -85,32 +64,30 @@ const Dashboard = () => {
 
   // ================= RUN DRAW =================
   const runDraw = async () => {
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/api/draw/run",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  try {
+    const res = await axios.post(
+      "http://localhost:5000/api/draw/run",
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
-      console.log("Draw Response:", res.data);
+    console.log("Draw Response:", res.data);
 
-      alert("🎲 Draw completed!");
+    alert("🎲 Draw completed!");
 
-      checkResult(); // 🔥 update result
+    // ✅ wait a bit before checking result
+    setTimeout(async () => {
+      await checkResult();
+    }, 1000);
 
-    } catch (err) {
-      console.log("Draw Error:", err.response?.data || err.message);
+  } catch (err) {
+    console.log("Draw Error:", err.response?.data || err.message);
 
-      alert(
-        err.response?.data?.message ||
-        "Draw failed ❌"
-      );
-    }
-  };
+    alert(err.response?.data?.message || "Draw failed ❌");
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#020617] text-white px-6 py-10">
@@ -130,7 +107,7 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {/* STEP 4: RESULT UI */}
+      {/* RESULT */}
       {isWinner !== null && (
         <div className="mb-10 text-center">
           {isWinner ? (
@@ -152,7 +129,6 @@ const Dashboard = () => {
         <div className="flex gap-4">
           <input
             type="number"
-            placeholder="Enter score (1-45)"
             value={newScore}
             onChange={(e) => setNewScore(e.target.value)}
             className="flex-1 bg-[#020617] border border-slate-700 p-3 rounded-lg outline-none"
@@ -168,30 +144,28 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* SCORES LIST */}
+      {/* SCORES */}
       <div className="bg-[#0b1224]/70 p-6 rounded-2xl border border-slate-800">
-        <h2 className="text-xl font-bold mb-6">Your Last 5 Scores</h2>
+        <h2 className="text-xl font-bold mb-6">Your Scores</h2>
 
         {scores.length === 0 ? (
           <p className="text-slate-400">No scores yet</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {scores.map((score, index) => (
-              <div
-                key={index}
-                className="bg-[#020617] border border-slate-700 p-4 rounded-xl flex justify-between"
-              >
-                <span className="text-lg font-bold text-[#2DD4BF]">
+          <div className="grid md:grid-cols-2 gap-4">
+            {scores.map((score, i) => (
+              <div key={i} className="p-4 bg-[#020617] rounded-xl">
+                <div className="text-[#2DD4BF] font-bold">
                   {score.value}
-                </span>
-                <span className="text-sm text-slate-400">
+                </div>
+                <div className="text-sm text-gray-400">
                   {new Date(score.date).toLocaleDateString()}
-                </span>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
     </div>
   );
 };

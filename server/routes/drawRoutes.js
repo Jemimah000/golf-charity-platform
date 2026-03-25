@@ -38,7 +38,7 @@ router.post("/run", authMiddleware, async (req, res) => {
 // ================= GET RESULT =================
 router.get("/result", (req, res) => {
   try {
-    res.json({
+    res.json({ 
       winnerId: lastWinnerId,
     });
   } catch (error) {

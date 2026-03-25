@@ -6,7 +6,6 @@ import User from "../models/User.js";
 const router = express.Router();
 
 // ================= GET ALL CHARITIES =================
-// GET /api/charity
 router.get("/", async (req, res) => {
   try {
     const charities = await Charity.find();
@@ -16,9 +15,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-
-// ================= ADD CHARITY (ADMIN ONLY) =================
-// POST /api/charity/add
+// ================= ADD CHARITY =================
 router.post("/add", authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== "admin") {
@@ -27,31 +24,23 @@ router.post("/add", authMiddleware, async (req, res) => {
 
     const { name, description } = req.body;
 
-    const charity = await Charity.create({
-      name,
-      description,
-    });
+    const charity = await Charity.create({ name, description });
 
-    res.json({
-      message: "Charity added successfully ✅",
-      charity,
-    });
+    res.json({ message: "Charity added ✅", charity });
 
   } catch (error) {
     res.status(500).json({ message: "Server error ❌" });
   }
 });
 
-
 // ================= SELECT CHARITY =================
-// POST /api/charity/select
 router.post("/select", authMiddleware, async (req, res) => {
   try {
     const { charityId, percentage } = req.body;
 
     if (percentage < 10) {
       return res.status(400).json({
-        message: "Minimum contribution is 10% ❌",
+        message: "Minimum 10% required ❌",
       });
     }
 
@@ -63,15 +52,16 @@ router.post("/select", authMiddleware, async (req, res) => {
 
     const user = await User.findById(req.user.id);
 
-    user.charity = charity.name;
-    user.charityPercentage = percentage;
+    user.charity = {
+      name: charity.name,
+      percentage,
+    };
 
     await user.save();
 
     res.json({
-      message: "Charity selected successfully ❤️",
+      message: "Charity selected ❤️",
       charity: user.charity,
-      percentage: user.charityPercentage,
     });
 
   } catch (error) {

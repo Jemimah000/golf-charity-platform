@@ -35,9 +35,8 @@ router.post("/signup", async (req, res) => {
 
     // 🔐 generate token (IMPORTANT)
     const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+    { id: user._id },
+      process.env.JWT_SECRET
     );
 
     res.status(201).json({
