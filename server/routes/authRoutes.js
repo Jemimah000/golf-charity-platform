@@ -22,7 +22,6 @@ router.post("/signup", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ allow role from frontend (user/admin)
     const user = await User.create({
       name,
       email,
@@ -59,16 +58,10 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(400).json({ message: "User not found ❌" });
-    }
+    if (!user) return res.status(400).json({ message: "User not found ❌" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials ❌" });
-    }
+    if (!isMatch) return res.status(400).json({ message: "Invalid credentials ❌" });
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -96,9 +89,7 @@ router.post("/login", async (req, res) => {
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-
     res.json(user);
-
   } catch (err) {
     res.status(500).json({ message: "Error fetching profile" });
   }
@@ -112,11 +103,39 @@ router.get("/users", authMiddleware, async (req, res) => {
     }
 
     const users = await User.find().select("-password");
-
     res.json(users);
-
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= SUBSCRIBE =================
+router.post("/subscribe", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const { type } = req.body;
+
+    if (!["monthly", "yearly"].includes(type)) {
+      return res.status(400).json({ message: "Invalid subscription type ❌" });
+    }
+
+    // ✅ Update subscription details
+    user.isSubscribed = true;
+    user.subscriptionType = type;
+    user.subscriptionExpiry = new Date(
+      Date.now() + (type === "monthly" ? 30 : 365) * 24 * 60 * 60 * 1000
+    );
+
+    await user.save();
+
+    res.json({
+      message: `Subscribed successfully 🎉`,
+      subscriptionType: user.subscriptionType,
+      subscriptionExpiry: user.subscriptionExpiry,
+    });
+  } catch (err) {
+    console.log("SUBSCRIBE ERROR:", err);
+    res.status(500).json({ message: "Subscription failed ❌" });
   }
 });
 
