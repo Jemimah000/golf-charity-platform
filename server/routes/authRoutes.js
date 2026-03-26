@@ -56,6 +56,26 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+// ================= SUBSCRIBE =================
+router.post("/subscribe", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    user.isSubscribed = true;
+    user.subscriptionType = req.body.type;
+    user.subscriptionExpiry = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000
+    );
+
+    await user.save();
+
+    res.json({ message: "Subscribed ✅" });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {

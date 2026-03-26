@@ -8,10 +8,10 @@ const router = express.Router();
 // POST /api/scores/add
 router.post("/add", authMiddleware, async (req, res) => {
   try {
-    const { score } = req.body;
+    const { value } = req.body;
 
     // ✅ Convert to number safely
-    const numericScore = Number(score);
+    const numericScore = Number(value);
 
     if (!numericScore) {
       return res.status(400).json({ message: "Score is required" });

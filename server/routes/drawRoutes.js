@@ -4,44 +4,52 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
-let lastWinnerId = null;
-
 // ================= RUN DRAW =================
 router.post("/run", authMiddleware, async (req, res) => {
   try {
     const users = await User.find();
 
-    // ❌ No users
-    if (!users || users.length === 0) {
-      return res.status(400).json({ message: "No users found" });
+    if (!users.length) {
+      return res.status(400).json({ message: "No users found ❌" });
     }
 
-    // 🎲 Pick random user
-    const randomIndex = Math.floor(Math.random() * users.length);
-    const winner = users[randomIndex];
+    // 🎲 generate 5 random numbers (1–45)
+    const winningNumbers = Array.from({ length: 5 }, () =>
+      Math.floor(Math.random() * 45) + 1
+    );
 
-    // 💾 Store winner
-    lastWinnerId = winner._id.toString();
+    let winners = [];
+
+    // 🔍 check matches
+    for (let user of users) {
+      const userScores = user.scores.map((s) => s.value);
+
+      const matchCount = userScores.filter((num) =>
+        winningNumbers.includes(num)
+      ).length;
+
+      if (matchCount >= 3) {
+        // 💰 add winnings
+        user.winnings += matchCount * 100;
+
+        await user.save();
+
+        winners.push({
+          userId: user._id,
+          email: user.email,
+          matchCount,
+        });
+      }
+    }
 
     res.json({
       message: "Draw completed 🎉",
-      winner,
+      winningNumbers,
+      winners,
     });
 
   } catch (error) {
     console.log("DRAW ERROR:", error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-
-// ================= GET RESULT =================
-router.get("/result", (req, res) => {
-  try {
-    res.json({ 
-      winnerId: lastWinnerId,
-    });
-  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });

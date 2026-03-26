@@ -2,13 +2,15 @@ import mongoose from "mongoose";
 
 const connectDB = async () => {
   try {
-    console.log("ENV CHECK:", process.env.MONGO_URI); // 👈 ADD THIS
-
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000, // ⏱ faster fail
+      socketTimeoutMS: 45000,
+    });
 
     console.log("MongoDB Connected 🔥");
+
   } catch (error) {
-    console.error("DB Error:", error.message);
+    console.log("DB Error:", error.message);
     process.exit(1);
   }
 };
