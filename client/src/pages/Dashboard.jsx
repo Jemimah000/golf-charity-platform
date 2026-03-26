@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../services/api"; // ✅ use centralized API instance
 import { Sparkles, PlusCircle } from "lucide-react";
 
 const Dashboard = () => {
@@ -8,41 +8,23 @@ const Dashboard = () => {
   const [result, setResult] = useState(null);
   const [user, setUser] = useState(null);
 
-  const token = localStorage.getItem("token");
-
   // ================= FETCH USER =================
-const API = "https://golf-charity-platform-5wiu.onrender.com";
-
-const fetchUser = async () => {
-  try {
-    const res = await axios.get(
-      `${API}/api/auth/me`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    setUser(res.data);
-
-  } catch (err) {
-    console.log("User Fetch Error:", err.response?.data || err.message);
-  }
-};
+  const fetchUser = async () => {
+    try {
+      const res = await API.get("/auth/me");
+      setUser(res.data);
+    } catch (err) {
+      console.log("User Fetch Error:", err.response?.data || err.message);
+    }
+  };
 
   // ================= FETCH SCORES =================
   const fetchScores = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/scores", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const res = await API.get("/scores");
       setScores(res.data);
     } catch (err) {
-      console.log("Fetch Error:", err.response?.data || err.message);
+      console.log("Fetch Scores Error:", err.response?.data || err.message);
     }
   };
 
@@ -54,29 +36,15 @@ const fetchUser = async () => {
   // ================= ADD SCORE =================
   const handleAddScore = async () => {
     try {
-      if (!newScore) {
-        return alert("Enter a score");
-      }
+      if (!newScore) return alert("Enter a score");
 
       const num = Number(newScore);
+      if (num < 1 || num > 45) return alert("Score must be between 1 and 45");
 
-      if (num < 1 || num > 45) {
-        return alert("Score must be between 1 and 45");
-      }
-
-      await axios.post(
-        "http://localhost:5000/api/scores/add",
-        { value: num },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await API.post("/scores/add", { value: num });
 
       setNewScore("");
       fetchScores();
-
     } catch (err) {
       console.log("Add Score Error:", err.response?.data || err.message);
       alert(err.response?.data?.message || "Error adding score ❌");
@@ -86,29 +54,16 @@ const fetchUser = async () => {
   // ================= RUN DRAW =================
   const runDraw = async () => {
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/draw/run",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await API.post("/draw/run");
 
       const winningNumbers = res.data.winningNumbers;
-
       const myScores = scores.map((s) => s.value);
-
-      const matches = myScores.filter((num) =>
-        winningNumbers.includes(num)
-      );
+      const matches = myScores.filter((num) => winningNumbers.includes(num));
 
       setResult({
         winningNumbers,
         matchCount: matches.length,
       });
-
     } catch (err) {
       console.log("Draw Error:", err.response?.data || err.message);
       alert("Draw failed ❌");
@@ -117,7 +72,6 @@ const fetchUser = async () => {
 
   return (
     <div className="min-h-screen bg-[#020617] text-white px-6 py-10">
-
       {/* HEADER */}
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-2 text-[#2DD4BF] text-xl font-bold">
@@ -137,10 +91,15 @@ const fetchUser = async () => {
       {user && (
         <div className="bg-[#0b1224]/70 p-6 rounded-2xl mb-10 border border-slate-800">
           <h2 className="text-xl font-bold mb-4">Profile</h2>
-
-          <p><span className="text-[#2DD4BF]">Name:</span> {user.name}</p>
-          <p><span className="text-[#2DD4BF]">Email:</span> {user.email}</p>
-          <p><span className="text-[#2DD4BF]">Winnings:</span> ₹{user.winnings || 0}</p>
+          <p>
+            <span className="text-[#2DD4BF]">Name:</span> {user.name}
+          </p>
+          <p>
+            <span className="text-[#2DD4BF]">Email:</span> {user.email}
+          </p>
+          <p>
+            <span className="text-[#2DD4BF]">Winnings:</span> ₹{user.winnings || 0}
+          </p>
         </div>
       )}
 
@@ -148,7 +107,6 @@ const fetchUser = async () => {
       {result && (
         <div className="mb-10 text-center">
           <div className="bg-[#0b1224] p-6 rounded-xl inline-block">
-
             <p>Winning Numbers: {result.winningNumbers.join(", ")}</p>
             <p>Your Matches: {result.matchCount}</p>
 
@@ -168,7 +126,6 @@ const fetchUser = async () => {
       {/* ADD SCORE */}
       <div className="bg-[#0b1224]/70 p-6 rounded-2xl mb-10 border border-slate-800">
         <h2 className="text-xl font-bold mb-4">Add New Score</h2>
-
         <div className="flex gap-4">
           <input
             type="number"
@@ -177,7 +134,6 @@ const fetchUser = async () => {
             onChange={(e) => setNewScore(e.target.value)}
             className="flex-1 bg-[#020617] border border-slate-700 p-3 rounded-lg outline-none"
           />
-
           <button
             onClick={handleAddScore}
             className="bg-[#2DD4BF] text-[#020617] px-6 rounded-lg font-bold flex items-center gap-2"
@@ -191,16 +147,13 @@ const fetchUser = async () => {
       {/* SCORES */}
       <div className="bg-[#0b1224]/70 p-6 rounded-2xl border border-slate-800">
         <h2 className="text-xl font-bold mb-6">Your Scores</h2>
-
         {scores.length === 0 ? (
           <p className="text-slate-400">No scores yet</p>
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
             {scores.map((score, i) => (
               <div key={i} className="p-4 bg-[#020617] rounded-xl">
-                <div className="text-[#2DD4BF] font-bold">
-                  {score.value}
-                </div>
+                <div className="text-[#2DD4BF] font-bold">{score.value}</div>
                 <div className="text-sm text-gray-400">
                   {new Date(score.date).toLocaleDateString()}
                 </div>
@@ -209,7 +162,6 @@ const fetchUser = async () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };

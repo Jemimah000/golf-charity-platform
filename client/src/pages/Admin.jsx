@@ -1,37 +1,28 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../services/api"; // ✅ centralized API instance
 
 const Admin = () => {
-  const token = localStorage.getItem("token");
-
   const [users, setUsers] = useState([]);
   const [draws, setDraws] = useState([]);
 
-  // ================= USERS =================
-const API = "https://golf-charity-platform-5wiu.onrender.com";
+  // ================= FETCH USERS =================
+  const fetchUsers = async () => {
+    try {
+      const res = await API.get("/auth/users");
+      setUsers(res.data);
+    } catch (err) {
+      console.log("Fetch Users Error:", err.response?.data || err.message);
+    }
+  };
 
-const fetchUsers = async () => {
-  try {
-    const res = await axios.get(
-      `${API}/api/auth/users`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    setUsers(res.data);
-  } catch (err) {
-    console.log("Fetch Users Error:", err.response?.data || err.message);
-  }
-};
-  // ================= DRAWS =================
+  // ================= FETCH DRAWS =================
   const fetchDraws = async () => {
-    const res = await axios.get(
-      "http://localhost:5000/api/draw/all",
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    setDraws(res.data);
+    try {
+      const res = await API.get("/draw/all");
+      setDraws(res.data);
+    } catch (err) {
+      console.log("Fetch Draws Error:", err.response?.data || err.message);
+    }
   };
 
   useEffect(() => {
@@ -41,62 +32,63 @@ const fetchUsers = async () => {
 
   // ================= RUN DRAW =================
   const runDraw = async () => {
-    await axios.post(
-      "http://localhost:5000/api/draw/run",
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-
-    alert("Official Draw Completed 🎉");
-    fetchDraws();
+    try {
+      await API.post("/draw/run");
+      alert("Official Draw Completed 🎉");
+      fetchDraws();
+    } catch (err) {
+      console.log("Run Draw Error:", err.response?.data || err.message);
+      alert("Draw failed ❌");
+    }
   };
 
   return (
     <div className="p-6 text-white bg-[#020617] min-h-screen">
-
-      <h1 className="text-2xl font-bold mb-6">
-        👑 Admin Panel
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">👑 Admin Panel</h1>
 
       <button
         onClick={runDraw}
-        className="bg-green-500 px-4 py-2 rounded mb-6"
+        className="bg-green-500 px-4 py-2 rounded mb-6 hover:scale-105 transition"
       >
         Run Official Draw 🎲
       </button>
 
       {/* USERS */}
       <h2 className="text-xl mb-3">Users</h2>
-      {users.map((u) => (
-        <div key={u._id} className="mb-2">
-          {u.email}
-        </div>
-      ))}
+      {users.length === 0 ? (
+        <p className="text-slate-400">No users found</p>
+      ) : (
+        users.map((u) => (
+          <div key={u._id} className="mb-2 p-2 bg-[#0b1224]/70 rounded">
+            {u.email} - Winnings: ₹{u.winnings || 0}
+          </div>
+        ))
+      )}
 
       {/* DRAWS */}
       <h2 className="text-xl mt-6 mb-3">Draw History</h2>
+      {draws.length === 0 ? (
+        <p className="text-slate-400">No draws yet</p>
+      ) : (
+        draws.map((draw) => (
+          <div key={draw._id} className="mb-4 border p-3 rounded bg-[#0b1224]/70">
+            <p>
+              <span className="text-[#2DD4BF] font-bold">Winning Numbers:</span>{" "}
+              {draw.winningNumbers.join(", ")}
+            </p>
 
-      {draws.map((draw) => (
-        <div key={draw._id} className="mb-4 border p-3 rounded">
-
-          <p>Winning: {draw.winningNumbers.join(", ")}</p>
-
-          {draw.winners.length === 0 ? (
-            <p>No winners</p>
-          ) : (
-            draw.winners.map((w, i) => (
-              <div key={i}>
-                {w.email} - {w.prize} - 
-                {w.isPaid ? " ✅ Paid" : " ❌ Pending"}
-              </div>
-            ))
-          )}
-
-        </div>
-      ))}
-
+            {draw.winners.length === 0 ? (
+              <p>No winners</p>
+            ) : (
+              draw.winners.map((w, i) => (
+                <div key={i} className="ml-2">
+                  {w.email} - {w.prize} - {w.isPaid ? "✅ Paid" : "❌ Pending"}
+                </div>
+              ))
+            )}
+          </div>
+        ))
+      )}
     </div>
   );
 };

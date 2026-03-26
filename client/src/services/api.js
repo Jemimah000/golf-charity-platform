@@ -1,7 +1,13 @@
 import axios from "axios";
 
+// 🔥 AUTO SWITCH BASE URL
+const BASE_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:5000/api"
+    : "https://golf-charity-platform-5wiu.onrender.com/api";
+
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: BASE_URL,
 });
 
 // 🔐 attach token automatically
