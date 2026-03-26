@@ -1,6 +1,8 @@
 import React from "react";
 import axios from "axios";
 
+const API = "https://golf-charity-platform-5wiu.onrender.com";
+
 const Subscription = () => {
 
   const subscribe = async () => {
@@ -8,41 +10,31 @@ const Subscription = () => {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/auth/subscribe",
+        `${API}/api/auth/subscribe`,
         { type: "monthly" },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      alert("Subscribed successfully 🎉");
-
-      // ✅ optional redirect
-      window.location.href = "/dashboard";
+      alert("Subscribed successfully ✅");
 
     } catch (err) {
+      console.log("Subscription Error:", err.response?.data || err.message);
       alert("Subscription failed ❌");
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex flex-col items-center justify-center px-6">
-
-      <h1 className="text-3xl font-bold mb-4">
-        Subscribe & Play 🎟️
-      </h1>
-
-      <p className="text-gray-400 mb-6 text-center max-w-md">
-        Subscribe to participate in monthly lucky draws and support charities ❤️
-      </p>
+    <div className="p-6 text-white">
+      <h1 className="text-xl mb-4">Subscription</h1>
 
       <button
         onClick={subscribe}
-        className="bg-[#2DD4BF] hover:scale-105 text-black px-8 py-3 rounded-xl font-bold transition"
+        className="bg-[#2DD4BF] text-black px-6 py-2 rounded"
       >
-        Subscribe Now
+        Subscribe Monthly
       </button>
-
     </div>
   );
 };

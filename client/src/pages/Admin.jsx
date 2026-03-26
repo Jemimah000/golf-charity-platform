@@ -8,16 +8,21 @@ const Admin = () => {
   const [draws, setDraws] = useState([]);
 
   // ================= USERS =================
-  const fetchUsers = async () => {
+const API = "https://golf-charity-platform-5wiu.onrender.com";
+
+const fetchUsers = async () => {
+  try {
     const res = await axios.get(
-      "http://localhost:5000/api/auth/users",
+      `${API}/api/auth/users`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
     setUsers(res.data);
-  };
-
+  } catch (err) {
+    console.log("Fetch Users Error:", err.response?.data || err.message);
+  }
+};
   // ================= DRAWS =================
   const fetchDraws = async () => {
     const res = await axios.get(

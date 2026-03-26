@@ -13,7 +13,7 @@ const Login = () => {
 
 const handleLogin = async () => {
   try {
-    const res = await axios.post("http://localhost:5000/api/auth/login", {
+    const res = await axios.post("https://golf-charity-platform-5wiu.onrender.com/api/auth/login", {
       email,
       password,
     });

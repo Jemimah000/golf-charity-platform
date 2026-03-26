@@ -11,19 +11,25 @@ const Dashboard = () => {
   const token = localStorage.getItem("token");
 
   // ================= FETCH USER =================
-  const fetchUser = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/auth/me", {
+const API = "https://golf-charity-platform-5wiu.onrender.com";
+
+const fetchUser = async () => {
+  try {
+    const res = await axios.get(
+      `${API}/api/auth/me`,
+      {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
+      }
+    );
 
-      setUser(res.data);
-    } catch (err) {
-      console.log("User Fetch Error:", err.response?.data || err.message);
-    }
-  };
+    setUser(res.data);
+
+  } catch (err) {
+    console.log("User Fetch Error:", err.response?.data || err.message);
+  }
+};
 
   // ================= FETCH SCORES =================
   const fetchScores = async () => {
