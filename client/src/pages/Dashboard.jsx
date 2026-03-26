@@ -5,8 +5,7 @@ import { Sparkles, PlusCircle } from "lucide-react";
 const Dashboard = () => {
   const [scores, setScores] = useState([]);
   const [newScore, setNewScore] = useState("");
-  const [isWinner, setIsWinner] = useState(null);
-
+  const [result, setResult] = useState(null);
   const token = localStorage.getItem("token");
 
   // ================= FETCH SCORES =================
@@ -22,45 +21,37 @@ const Dashboard = () => {
     }
   };
 
-  // ================= CHECK RESULT =================
-  const checkResult = async () => {
-  const res = await axios.get("http://localhost:5000/api/draw/result");
-
-  const winnerId = res.data.winnerId;
-
-  const payload = JSON.parse(atob(token.split(".")[1]));
-
-  if (payload.id === winnerId) {
-    setIsWinner(true);
-  } else {
-    setIsWinner(false);
-  }
-};
-
-  useEffect(() => {
-    fetchScores();
-    checkResult();
-  }, []);
 
   // ================= ADD SCORE =================
-  const handleAddScore = async () => {
-    try {
-      if (!newScore) return alert("Enter a score");
-
-      await axios.post(
-        "http://localhost:5000/api/scores/add",
-        { score: Number(newScore) },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setNewScore("");
-      fetchScores();
-    } catch (err) {
-      alert("Error adding score ❌");
+const handleAddScore = async () => {
+  try {
+    if (!newScore) {
+      return alert("Enter a score");
     }
-  };
+
+    // ✅ VALIDATION 
+    if (newScore < 1 || newScore > 45) {
+      return alert("Score must be between 1 and 45");
+    }
+
+    await axios.post(
+      "http://localhost:5000/api/scores/add",
+      { value: Number(newScore) }, // ✅ IMPORTANT FIX (value NOT score)
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setNewScore("");
+    fetchScores();
+
+  } catch (err) {
+    console.log("Add Score Error:", err.response?.data || err.message);
+    alert("Error adding score ❌");
+  }
+};
 
   // ================= RUN DRAW =================
   const runDraw = async () => {
@@ -73,19 +64,21 @@ const Dashboard = () => {
       }
     );
 
-    console.log("Draw Response:", res.data);
+    const data = res.data;
 
-    alert("🎲 Draw completed!");
+    const user = JSON.parse(localStorage.getItem("user"));
 
-    // ✅ wait a bit before checking result
-    setTimeout(async () => {
-      await checkResult();
-    }, 1000);
+    const myResult = data.winners.find(
+      (w) => w.userId === user.id
+    );
+
+    setResult({
+      winningNumbers: data.winningNumbers,
+      matchCount: myResult ? myResult.matchCount : 0,
+    });
 
   } catch (err) {
-    console.log("Draw Error:", err.response?.data || err.message);
-
-    alert(err.response?.data?.message || "Draw failed ❌");
+    alert("Draw failed ❌");
   }
 };
 
@@ -107,20 +100,30 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {/* RESULT */}
-      {isWinner !== null && (
-        <div className="mb-10 text-center">
-          {isWinner ? (
-            <div className="bg-green-500 text-black px-6 py-4 rounded-xl font-bold inline-block">
-              🎉 You Won the Lucky Draw!
-            </div>
-          ) : (
-            <div className="bg-red-500 text-black px-6 py-4 rounded-xl font-bold inline-block">
-              😢 Better Luck Next Time
-            </div>
-          )}
+      {result && (
+  <div className="mb-10 text-center">
+    <div className="bg-[#0b1224] p-6 rounded-xl inline-block">
+
+      <p className="mb-2">
+        Winning Numbers: {result.winningNumbers.join(", ")}
+      </p>
+
+      <p className="mb-2">
+        Your Matches: {result.matchCount}
+      </p>
+
+      {result.matchCount >= 3 ? (
+        <div className="bg-green-500 text-black px-4 py-2 rounded">
+          🎉 You Won!
+        </div>
+      ) : (
+        <div className="bg-red-500 text-black px-4 py-2 rounded">
+          😢 Better Luck Next Time
         </div>
       )}
+    </div>
+  </div>
+)}
 
       {/* ADD SCORE */}
       <div className="bg-[#0b1224]/70 p-6 rounded-2xl mb-10 border border-slate-800">

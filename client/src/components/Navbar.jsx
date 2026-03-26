@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 const Navbar = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user")); // ✅ added
 
   return (
     <nav className="flex justify-between items-center p-4 bg-[#020617] text-white">
@@ -12,24 +13,21 @@ const Navbar = () => {
 
       <div className="flex items-center gap-4">
 
-        {/* Home */}
         <button onClick={() => navigate("/")}>Home</button>
 
-        {/* Dashboard */}
         {token && (
           <button onClick={() => navigate("/dashboard")}>
             Dashboard
           </button>
         )}
 
-        {/* ✅ ADMIN BUTTON (PASTE HERE) */}
-        {token && (
+        {/* ✅ ADMIN ONLY */}
+        {user && user.role === "admin" && (
           <button onClick={() => navigate("/admin")}>
             Admin
           </button>
         )}
 
-        {/* Login */}
         {!token && (
           <button onClick={() => navigate("/login")}>
             Login

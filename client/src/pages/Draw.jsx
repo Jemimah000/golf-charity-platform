@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 import axios from "axios";
 import NumberGrid from "../features/draw/NumberGrid";
-import DrawResult from "../features/draw/DrawResult";
 
 const Draw = () => {
   const [selectedNumbers, setSelectedNumbers] = useState([]);
   const [result, setResult] = useState(null);
 
   const runDraw = async () => {
+    console.log("🔥 BUTTON CLICKED");
+
     if (selectedNumbers.length !== 5) {
-      alert("Select 5 numbers");
+      alert("Select exactly 5 numbers");
       return;
     }
 
@@ -26,15 +27,22 @@ const Draw = () => {
         }
       );
 
+      console.log("✅ RESPONSE:", res.data);
+
+      const winningNumbers = res.data.winningNumbers;
+
+      const matches = selectedNumbers.filter((num) =>
+        winningNumbers.includes(num)
+      );
+
       setResult({
-        drawn: res.data.drawnNumbers,
-        matches: selectedNumbers.filter((n) =>
-          res.data.drawnNumbers.includes(n)
-        ),
+        winningNumbers,
+        matches,
       });
 
     } catch (err) {
-      console.log(err);
+      console.log("❌ DRAW ERROR:", err.response?.data || err.message);
+      alert("Draw failed ❌");
     }
   };
 
@@ -57,7 +65,22 @@ const Draw = () => {
         Play Draw
       </button>
 
-      {result && <DrawResult result={result} />}
+      {result && (
+        <div className="mt-6">
+          <p>Winning Numbers: {result.winningNumbers.join(", ")}</p>
+          <p>Your Matches: {result.matches.length}</p>
+
+          {result.matches.length >= 3 ? (
+            <div className="bg-green-500 text-black px-4 py-2 mt-2 rounded">
+              🎉 You Won!
+            </div>
+          ) : (
+            <div className="bg-red-500 text-black px-4 py-2 mt-2 rounded">
+              😢 Better Luck Next Time
+            </div>
+          )}
+        </div>
+      )}
 
     </div>
   );

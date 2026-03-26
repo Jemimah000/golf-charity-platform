@@ -9,22 +9,34 @@ const Login = () => {
 
   const navigate = useNavigate(); // ✅ added
 
-  const handleLogin = async () => {
-    try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
-        email,
-        password,
-      });
+  // ONLY change handleLogin function
 
-      localStorage.setItem("token", res.data.token);
+const handleLogin = async () => {
+  try {
+    const res = await axios.post("http://localhost:5000/api/auth/login", {
+      email,
+      password,
+    });
 
-      // ✅ redirect instead of alert
+    // ✅ store token
+    localStorage.setItem("token", res.data.token);
+
+    // ✅ store user (IMPORTANT)
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+
+    // ✅ role-based redirect
+    const user = res.data.user;
+
+    if (user.role === "admin") {
+      navigate("/admin");
+    } else {
       navigate("/dashboard");
-
-    } catch (err) {
-      alert("Login failed ❌");
     }
-  };
+
+  } catch (err) {
+    alert("Login failed ❌");
+  }
+};
 
   return (
     <div className="relative min-h-screen w-full bg-[#020617] text-white flex items-center justify-center px-4">

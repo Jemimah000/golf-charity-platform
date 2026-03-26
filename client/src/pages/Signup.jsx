@@ -10,23 +10,27 @@ const Signup = () => {
 
   const navigate = useNavigate(); // ✅ added
 
-  const handleSignup = async () => {
-    try {
-      const res = await axios.post("http://localhost:5000/api/auth/signup", {
-        name,
-        email,
-        password,
-      });
+  // ONLY change handleSignup function
 
-      localStorage.setItem("token", res.data.token);
+const handleSignup = async () => {
+  try {
+    const res = await axios.post("http://localhost:5000/api/auth/signup", {
+      name,
+      email,
+      password,
+    });
 
-      // ✅ redirect instead of alert
-      navigate("/dashboard");
+    localStorage.setItem("token", res.data.token);
 
-    } catch (err) {
-      alert("Signup failed ❌");
-    }
-  };
+    // ✅ store user
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+
+    navigate("/dashboard");
+
+  } catch (err) {
+    alert("Signup failed ❌");
+  }
+};
 
   return (
     <div className="relative min-h-screen w-full bg-[#020617] text-white flex items-center justify-center px-4">
