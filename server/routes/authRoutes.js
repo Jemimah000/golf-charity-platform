@@ -11,36 +11,30 @@ router.post("/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // 🔴 validation
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required ❌" });
+      return res.status(400).json({ message: "All fields required ❌" });
     }
 
-    // 🔴 check existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists ❌" });
     }
 
-    // 🔐 hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new User({
+    const user = await User.create({
       name,
       email,
       password: hashedPassword,
     });
 
-    await user.save();
-
-    // 🔐 generate token (IMPORTANT)
     const token = jwt.sign(
-    { id: user._id },
-      process.env.JWT_SECRET
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
     );
 
     res.status(201).json({
-      message: "Signup successful 🎉",
       token,
       user: {
         id: user._id,
@@ -56,36 +50,10 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// ================= SUBSCRIBE =================
-router.post("/subscribe", authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-
-    user.isSubscribed = true;
-    user.subscriptionType = req.body.type;
-    user.subscriptionExpiry = new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000
-    );
-
-    await user.save();
-
-    res.json({ message: "Subscribed ✅" });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // 🔴 validation
-    if (!email || !password) {
-      return res.status(400).json({ message: "All fields are required ❌" });
-    }
 
     const user = await User.findOne({ email });
 
@@ -93,14 +61,12 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "User not found ❌" });
     }
 
-    // 🔐 compare password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials ❌" });
     }
 
-    // 🔐 generate token (WITH ROLE 🔥)
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -108,7 +74,6 @@ router.post("/login", async (req, res) => {
     );
 
     res.json({
-      message: "Login successful 🔥",
       token,
       user: {
         id: user._id,
@@ -124,11 +89,21 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// ================= GET PROFILE =================
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
 
-// ================= GET ALL USERS (ADMIN) =================
+    res.json(user);
+
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching profile" });
+  }
+});
+
+// ================= ADMIN USERS =================
 router.get("/users", authMiddleware, async (req, res) => {
   try {
-    // 🔴 only admin allowed
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Access denied ❌" });
     }
