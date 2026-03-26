@@ -6,13 +6,32 @@ const Dashboard = () => {
   const [scores, setScores] = useState([]);
   const [newScore, setNewScore] = useState("");
   const [result, setResult] = useState(null);
+  const [user, setUser] = useState(null);
+
   const token = localStorage.getItem("token");
+
+  // ================= FETCH USER =================
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setUser(res.data);
+    } catch (err) {
+      console.log("User Fetch Error:", err.response?.data || err.message);
+    }
+  };
 
   // ================= FETCH SCORES =================
   const fetchScores = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/scores", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       setScores(res.data);
@@ -21,66 +40,74 @@ const Dashboard = () => {
     }
   };
 
+  useEffect(() => {
+    fetchUser();
+    fetchScores();
+  }, []);
 
   // ================= ADD SCORE =================
-const handleAddScore = async () => {
-  try {
-    if (!newScore) {
-      return alert("Enter a score");
-    }
-
-    // ✅ VALIDATION 
-    if (newScore < 1 || newScore > 45) {
-      return alert("Score must be between 1 and 45");
-    }
-
-    await axios.post(
-      "http://localhost:5000/api/scores/add",
-      { value: Number(newScore) }, // ✅ IMPORTANT FIX (value NOT score)
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const handleAddScore = async () => {
+    try {
+      if (!newScore) {
+        return alert("Enter a score");
       }
-    );
 
-    setNewScore("");
-    fetchScores();
+      const num = Number(newScore);
 
-  } catch (err) {
-    console.log("Add Score Error:", err.response?.data || err.message);
-    alert("Error adding score ❌");
-  }
-};
+      if (num < 1 || num > 45) {
+        return alert("Score must be between 1 and 45");
+      }
+
+      await axios.post(
+        "http://localhost:5000/api/scores/add",
+        { value: num },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setNewScore("");
+      fetchScores();
+
+    } catch (err) {
+      console.log("Add Score Error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Error adding score ❌");
+    }
+  };
 
   // ================= RUN DRAW =================
   const runDraw = async () => {
-  try {
-    const res = await axios.post(
-      "http://localhost:5000/api/draw/run",
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/draw/run",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    const data = res.data;
+      const winningNumbers = res.data.winningNumbers;
 
-    const user = JSON.parse(localStorage.getItem("user"));
+      const myScores = scores.map((s) => s.value);
 
-    const myResult = data.winners.find(
-      (w) => w.userId === user.id
-    );
+      const matches = myScores.filter((num) =>
+        winningNumbers.includes(num)
+      );
 
-    setResult({
-      winningNumbers: data.winningNumbers,
-      matchCount: myResult ? myResult.matchCount : 0,
-    });
+      setResult({
+        winningNumbers,
+        matchCount: matches.length,
+      });
 
-  } catch (err) {
-    alert("Draw failed ❌");
-  }
-};
+    } catch (err) {
+      console.log("Draw Error:", err.response?.data || err.message);
+      alert("Draw failed ❌");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#020617] text-white px-6 py-10">
@@ -100,30 +127,37 @@ const handleAddScore = async () => {
         </button>
       </div>
 
-      {result && (
-  <div className="mb-10 text-center">
-    <div className="bg-[#0b1224] p-6 rounded-xl inline-block">
+      {/* PROFILE */}
+      {user && (
+        <div className="bg-[#0b1224]/70 p-6 rounded-2xl mb-10 border border-slate-800">
+          <h2 className="text-xl font-bold mb-4">Profile</h2>
 
-      <p className="mb-2">
-        Winning Numbers: {result.winningNumbers.join(", ")}
-      </p>
-
-      <p className="mb-2">
-        Your Matches: {result.matchCount}
-      </p>
-
-      {result.matchCount >= 3 ? (
-        <div className="bg-green-500 text-black px-4 py-2 rounded">
-          🎉 You Won!
-        </div>
-      ) : (
-        <div className="bg-red-500 text-black px-4 py-2 rounded">
-          😢 Better Luck Next Time
+          <p><span className="text-[#2DD4BF]">Name:</span> {user.name}</p>
+          <p><span className="text-[#2DD4BF]">Email:</span> {user.email}</p>
+          <p><span className="text-[#2DD4BF]">Winnings:</span> ₹{user.winnings || 0}</p>
         </div>
       )}
-    </div>
-  </div>
-)}
+
+      {/* RESULT */}
+      {result && (
+        <div className="mb-10 text-center">
+          <div className="bg-[#0b1224] p-6 rounded-xl inline-block">
+
+            <p>Winning Numbers: {result.winningNumbers.join(", ")}</p>
+            <p>Your Matches: {result.matchCount}</p>
+
+            {result.matchCount >= 3 ? (
+              <div className="bg-green-500 text-black px-4 py-2 mt-2 rounded">
+                🎉 You Won!
+              </div>
+            ) : (
+              <div className="bg-red-500 text-black px-4 py-2 mt-2 rounded">
+                😢 Better Luck Next Time
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ADD SCORE */}
       <div className="bg-[#0b1224]/70 p-6 rounded-2xl mb-10 border border-slate-800">
@@ -132,6 +166,7 @@ const handleAddScore = async () => {
         <div className="flex gap-4">
           <input
             type="number"
+            placeholder="Enter score (1-45)"
             value={newScore}
             onChange={(e) => setNewScore(e.target.value)}
             className="flex-1 bg-[#020617] border border-slate-700 p-3 rounded-lg outline-none"

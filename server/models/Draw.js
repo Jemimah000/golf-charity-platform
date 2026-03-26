@@ -2,32 +2,32 @@ import mongoose from "mongoose";
 
 const drawSchema = new mongoose.Schema(
   {
-    // 🔥 Draw date (monthly)
+    // 📅 Draw date
     drawDate: {
       type: Date,
       default: Date.now,
     },
 
-    // 🔥 Winning numbers (like lottery)
+    // 🎯 Winning numbers
     winningNumbers: {
       type: [Number],
       required: true,
     },
 
-    // 🔥 Winners list
+    // 🏆 Winners
     winners: [
       {
         user: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
         },
-        matchCount: {
-          type: Number, // 3, 4, or 5 match
-        },
+        matchCount: Number,
+
         prize: {
           type: Number,
           default: 0,
         },
+
         status: {
           type: String,
           enum: ["pending", "verified", "paid"],
@@ -36,7 +36,7 @@ const drawSchema = new mongoose.Schema(
       },
     ],
 
-    // 🔥 Prize pool info
+    // 💰 Prize pool
     totalPool: {
       type: Number,
       default: 0,
@@ -47,14 +47,14 @@ const drawSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // 🔥 Draw type
+    // ⚙️ Type
     drawType: {
       type: String,
       enum: ["random", "algorithm"],
       default: "random",
     },
 
-    // 🔥 Is published or not
+    // 📢 Published or not
     isPublished: {
       type: Boolean,
       default: false,
@@ -63,6 +63,4 @@ const drawSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Draw = mongoose.model("Draw", drawSchema);
-
-export default Draw;
+export default mongoose.model("Draw", drawSchema);
